@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useRef, useState, useEffect } from "react";
 import { Maximize, MessageSquare, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { TwitchPlayer } from "@/components/twitch-player";
+import { getTwitchParents, TwitchPlayer } from "@/components/twitch-player";
 import { getChannel } from "@/lib/twitch.functions";
 
 export const Route = createFileRoute("/watch/$login")({
@@ -29,8 +29,8 @@ function Watch() {
   const { login, user, stream } = Route.useLoaderData();
   const box = useRef<HTMLDivElement>(null);
   const [chat, setChat] = useState(true);
-  const [host, setHost] = useState<string | null>(null);
-  useEffect(() => setHost(window.location.hostname), []);
+  const [chatParents, setChatParents] = useState<string[]>([]);
+  useEffect(() => setChatParents(getTwitchParents()), []);
 
   return (
     <div className="min-h-screen">
@@ -66,10 +66,10 @@ function Watch() {
             </div>
             <p className="mt-4 text-xs text-muted-foreground">Stream by {user?.display_name ?? login}, broadcast on Twitch. All rights belong to the creator.</p>
           </div>
-          {chat && host && (
+          {chat && chatParents.length > 0 && (
             <iframe
               title="Chat"
-              src={`https://www.twitch.tv/embed/${login}/chat?parent=${host}&darkpopout`}
+              src={`https://www.twitch.tv/embed/${login}/chat?${chatParents.map((parent) => `parent=${encodeURIComponent(parent)}`).join("&")}&darkpopout`}
               className="h-[70vh] w-full rounded-lg border border-border lg:h-auto lg:min-h-[500px]"
             />
           )}
