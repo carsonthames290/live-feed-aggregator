@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { getHealthReport } from "@/lib/streams.functions";
+import { healthCheck as getHealthReport } from "@/lib/twitch.functions";
 
 export const Route = createFileRoute("/health")({
   head: () => ({
@@ -9,10 +9,10 @@ export const Route = createFileRoute("/health")({
       { title: "System Health — LiveCast" },
       {
         name: "description",
-        content: "Daily status report for LiveCast: live event feed, stream links and auto-repairs.",
+        content: "Daily status report for LiveCast: Twitch listings and categories.",
       },
       { property: "og:title", content: "System Health — LiveCast" },
-      { property: "og:description", content: "Live status of the LiveCast streaming pipeline." },
+      { property: "og:description", content: "Live status of the LiveCast Twitch connection." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -87,16 +87,6 @@ function Health() {
               ))}
             </ul>
 
-            {data.repairs.length > 0 && (
-              <div className="mt-6 rounded-md border border-accent/50 bg-accent/10 p-3 text-xs">
-                <p className="font-semibold uppercase tracking-wide text-accent">Auto-repairs</p>
-                <ul className="mt-2 list-disc space-y-1 pl-4 text-muted-foreground">
-                  {data.repairs.map((r) => (
-                    <li key={r}>{r}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
           </>
         )}
       </main>
