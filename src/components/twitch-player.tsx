@@ -8,6 +8,27 @@ declare global {
 }
 
 let scriptPromise: Promise<void> | null = null;
+
+export function getTwitchParents() {
+  const parents = new Set<string>([window.location.hostname]);
+
+  try {
+    const referrerHost = new URL(document.referrer).hostname;
+    if (referrerHost) parents.add(referrerHost);
+  } catch {
+    // A missing or opaque referrer is normal when the app is opened directly.
+  }
+
+  const previewId = window.location.hostname.match(
+    /^([a-f0-9-]+)\.lovableproject\.com$/i,
+  )?.[1];
+  if (previewId) {
+    parents.add(`id-preview--${previewId}.lovable.app`);
+  }
+
+  return [...parents];
+}
+
 function loadScript() {
   if (window.Twitch?.Player) return Promise.resolve();
   scriptPromise ??= new Promise((resolve, reject) => {
@@ -37,7 +58,7 @@ export function TwitchPlayer({ channel, muted = false }: { channel: string; mute
         channel,
         width: "100%",
         height: "100%",
-        parent: [window.location.hostname],
+        parent: getTwitchParents(),
         muted: mutedRef.current,
         autoplay: true,
       });
