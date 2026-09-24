@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { listStreams, thumb, type Stream } from "@/lib/twitch.functions";
 
-type HomeSearch = { game?: string; q?: string };
+type HomeSearch = { game?: string | undefined; q?: string | undefined };
 
 export const Route = createFileRoute("/")({
   validateSearch: (s: Record<string, unknown>): HomeSearch => ({

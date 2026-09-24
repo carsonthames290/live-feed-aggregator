@@ -4,7 +4,7 @@ import { Volume2, VolumeX, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TwitchPlayer } from "@/components/twitch-player";
 
-type MultiviewSearch = { streams?: string };
+type MultiviewSearch = { streams?: string | undefined };
 
 export const Route = createFileRoute("/watch/multiview")({
   validateSearch: (s: Record<string, unknown>): MultiviewSearch => ({
