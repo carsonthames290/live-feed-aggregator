@@ -61,7 +61,9 @@ function StreamCard({ s, selected, onToggle }: { s: Stream; selected: boolean; o
 }
 
 function Home() {
-  const { streams, games } = Route.useLoaderData();
+  const data = Route.useLoaderData() as Partial<{ streams: Stream[]; games: { id: string; name: string }[] }> | undefined;
+  const streams = Array.isArray(data?.streams) ? data.streams : [];
+  const games = Array.isArray(data?.games) ? data.games : [];
   const search = Route.useSearch();
   const navigate = useNavigate({ from: "/" });
   const [q, setQ] = useState(search.q ?? "");
