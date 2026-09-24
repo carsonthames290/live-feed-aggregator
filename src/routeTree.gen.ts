@@ -11,9 +11,9 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as HealthRouteImport } from './routes/health'
+import { Route as WatchLoginRouteImport } from './routes/watch.$login'
 import { Route as WatchMultiviewRouteImport } from './routes/watch.multiview'
 import { Route as ApiPublicHealthCheckRouteImport } from './routes/api/public/health-check'
-import { Route as WatchSourceIdRouteImport } from './routes/watch.$source.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -23,6 +23,11 @@ const IndexRoute = IndexRouteImport.update({
 const HealthRoute = HealthRouteImport.update({
   id: '/health',
   path: '/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WatchLoginRoute = WatchLoginRouteImport.update({
+  id: '/watch/$login',
+  path: '/watch/$login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const WatchMultiviewRoute = WatchMultiviewRouteImport.update({
@@ -35,64 +40,59 @@ const ApiPublicHealthCheckRoute = ApiPublicHealthCheckRouteImport.update({
   path: '/api/public/health-check',
   getParentRoute: () => rootRouteImport,
 } as any)
-const WatchSourceIdRoute = WatchSourceIdRouteImport.update({
-  id: '/watch/$source/$id',
-  path: '/watch/$source/$id',
-  getParentRoute: () => rootRouteImport,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/health': typeof HealthRoute
+  '/watch/$login': typeof WatchLoginRoute
   '/watch/multiview': typeof WatchMultiviewRoute
   '/api/public/health-check': typeof ApiPublicHealthCheckRoute
-  '/watch/$source/$id': typeof WatchSourceIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/health': typeof HealthRoute
+  '/watch/$login': typeof WatchLoginRoute
   '/watch/multiview': typeof WatchMultiviewRoute
   '/api/public/health-check': typeof ApiPublicHealthCheckRoute
-  '/watch/$source/$id': typeof WatchSourceIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/health': typeof HealthRoute
+  '/watch/$login': typeof WatchLoginRoute
   '/watch/multiview': typeof WatchMultiviewRoute
   '/api/public/health-check': typeof ApiPublicHealthCheckRoute
-  '/watch/$source/$id': typeof WatchSourceIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/health'
+    | '/watch/$login'
     | '/watch/multiview'
     | '/api/public/health-check'
-    | '/watch/$source/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/health'
+    | '/watch/$login'
     | '/watch/multiview'
     | '/api/public/health-check'
-    | '/watch/$source/$id'
   id:
     | '__root__'
     | '/'
     | '/health'
+    | '/watch/$login'
     | '/watch/multiview'
     | '/api/public/health-check'
-    | '/watch/$source/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   HealthRoute: typeof HealthRoute
+  WatchLoginRoute: typeof WatchLoginRoute
   WatchMultiviewRoute: typeof WatchMultiviewRoute
   ApiPublicHealthCheckRoute: typeof ApiPublicHealthCheckRoute
-  WatchSourceIdRoute: typeof WatchSourceIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -111,6 +111,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HealthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/watch/$login': {
+      id: '/watch/$login'
+      path: '/watch/$login'
+      fullPath: '/watch/$login'
+      preLoaderRoute: typeof WatchLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/watch/multiview': {
       id: '/watch/multiview'
       path: '/watch/multiview'
@@ -125,22 +132,15 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHealthCheckRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/watch/$source/$id': {
-      id: '/watch/$source/$id'
-      path: '/watch/$source/$id'
-      fullPath: '/watch/$source/$id'
-      preLoaderRoute: typeof WatchSourceIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   HealthRoute: HealthRoute,
+  WatchLoginRoute: WatchLoginRoute,
   WatchMultiviewRoute: WatchMultiviewRoute,
   ApiPublicHealthCheckRoute: ApiPublicHealthCheckRoute,
-  WatchSourceIdRoute: WatchSourceIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

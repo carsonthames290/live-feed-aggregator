@@ -1,10 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { runHealthCheck } from "@/lib/streams.functions";
+import { runHealthCheck } from "@/lib/twitch.functions";
 
-/**
- * Daily health check endpoint. Safe to call from a scheduler; read-only apart
- * from refreshing/clearing internal caches.
- */
 export const Route = createFileRoute("/api/public/health-check")({
   server: {
     handlers: {
