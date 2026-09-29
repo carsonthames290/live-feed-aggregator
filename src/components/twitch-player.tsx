@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type TwitchPlayer = { setMuted: (m: boolean) => void; setVolume: (v: number) => void };
 declare global {
@@ -48,32 +48,70 @@ export function TwitchPlayer({ channel, muted = false }: { channel: string; mute
   const player = useRef<TwitchPlayer | null>(null);
   const mutedRef = useRef(muted);
   mutedRef.current = muted;
+  const [fallback, setFallback] = useState(false);
+  const [parents, setParents] = useState<string[]>([]);
 
   useEffect(() => {
+    setParents(getTwitchParents());
+    setFallback(false);
     let cancelled = false;
-    loadScript().then(() => {
-      if (cancelled || !el.current || !window.Twitch) return;
-      el.current.innerHTML = "";
-      player.current = new window.Twitch.Player(el.current, {
-        channel,
-        width: "100%",
-        height: "100%",
-        parent: getTwitchParents(),
-        muted: mutedRef.current,
-        autoplay: true,
+    // Some devices (e.g. Chromebooks, strict privacy settings) block the Twitch script.
+    // If the player hasn't appeared after 6s, fall back to a plain Twitch iframe.
+    const timer = window.setTimeout(() => {
+      if (!cancelled && !el.current?.querySelector("iframe")) setFallback(true);
+    }, 6000);
+    loadScript()
+      .then(() => {
+        if (cancelled || !el.current || !window.Twitch) return;
+        el.current.innerHTML = "";
+        try {
+          player.current = new window.Twitch.Player(el.current, {
+            channel,
+            width: "100%",
+            height: "100%",
+            parent: getTwitchParents(),
+            muted: mutedRef.current,
+            autoplay: true,
+          });
+        } catch {
+          setFallback(true);
+        }
+      })
+      .catch(() => {
+        scriptPromise = null;
+        if (!cancelled) setFallback(true);
       });
-    });
     return () => {
       cancelled = true;
+      window.clearTimeout(timer);
       player.current = null;
       if (el.current) el.current.innerHTML = "";
     };
   }, [channel]);
 
   useEffect(() => {
-    player.current?.setMuted(muted);
-    if (!muted) player.current?.setVolume(0.8);
+    try {
+      player.current?.setMuted(muted);
+      if (!muted) player.current?.setVolume(0.8);
+    } catch {
+      // player not ready yet
+    }
   }, [muted]);
+
+  if (fallback && parents.length) {
+    const src = `https://player.twitch.tv/?channel=${encodeURIComponent(channel)}&${parents
+      .map((p) => `parent=${encodeURIComponent(p)}`)
+      .join("&")}&autoplay=true&muted=${muted}`;
+    return (
+      <iframe
+        src={src}
+        title={`${channel} on Twitch`}
+        allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
+        allowFullScreen
+        className="h-full w-full"
+      />
+    );
+  }
 
   return <div ref={el} className="h-full w-full [&_iframe]:h-full [&_iframe]:w-full" />;
 }
