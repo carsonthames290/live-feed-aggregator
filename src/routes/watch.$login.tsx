@@ -1,16 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useRef, useState, useEffect } from "react";
-import { Maximize, MessageSquare, ExternalLink } from "lucide-react";
+import { Maximize, MessageSquare, ExternalLink, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getTwitchParents, TwitchPlayer } from "@/components/twitch-player";
-import { getChannel } from "@/lib/twitch.functions";
+import { FEATURED, readFavorites, writeFavorites } from "@/lib/channels";
 
 export const Route = createFileRoute("/watch/$login")({
-  loader: ({ params }) => getChannel({ data: { login: params.login } }),
-  head: ({ loaderData }) => {
-    const name = loaderData?.user?.display_name ?? "Stream";
+  head: ({ params }) => {
+    const name = FEATURED.find((c) => c.login === params.login.toLowerCase())?.name ?? params.login;
     const title = `${name} live — LiveCast`;
-    const desc = loaderData?.stream?.title ?? `Watch ${name} on LiveCast.`;
+    const desc = `Watch ${name} live on LiveCast, with chat and four-stream Multiview.`;
     return {
       meta: [
         { title },
@@ -26,18 +25,36 @@ export const Route = createFileRoute("/watch/$login")({
 });
 
 function Watch() {
-  const { login, user, stream } = Route.useLoaderData();
+  const { login: raw } = Route.useParams();
+  const login = raw.toLowerCase();
+  const name = FEATURED.find((c) => c.login === login)?.name ?? raw;
   const box = useRef<HTMLDivElement>(null);
   const [chat, setChat] = useState(true);
   const [chatParents, setChatParents] = useState<string[]>([]);
-  useEffect(() => setChatParents(getTwitchParents()), []);
+  const [fav, setFav] = useState(false);
+
+  useEffect(() => {
+    setChatParents(getTwitchParents());
+    setFav(readFavorites().includes(login));
+  }, [login]);
+
+  const toggleFav = () => {
+    const current = readFavorites();
+    const next = current.includes(login) ? current.filter((x) => x !== login) : [...current, login];
+    writeFavorites(next);
+    setFav(next.includes(login));
+  };
 
   return (
     <div className="min-h-screen">
       <header className="border-b border-border">
         <div className="mx-auto flex max-w-screen-2xl items-center justify-between px-4 py-4">
-          <Link to="/" className="font-display text-3xl tracking-wider text-primary">LiveCast</Link>
-          <Button asChild variant="outline" size="sm"><Link to="/">← Back to home</Link></Button>
+          <Link to="/" search={{}} className="font-display text-3xl tracking-wider text-primary">
+            LiveCast
+          </Link>
+          <Button asChild variant="outline" size="sm">
+            <Link to="/" search={{}}>← Back to home</Link>
+          </Button>
         </div>
       </header>
       <main className="mx-auto max-w-screen-2xl px-4 py-6">
@@ -47,29 +64,34 @@ function Watch() {
               <TwitchPlayer channel={login} />
             </div>
             <div className="mt-4 flex flex-wrap items-start justify-between gap-3">
-              <div className="flex items-center gap-3">
-                {user?.profile_image_url && <img src={user.profile_image_url} alt="" className="h-12 w-12 rounded-full" />}
-                <div>
-                  <h1 className="text-3xl">{user?.display_name ?? login}</h1>
-                  <p className="text-sm text-muted-foreground">
-                    {stream ? `${stream.title} · ${stream.game_name} · ${stream.viewer_count.toLocaleString()} watching` : "Offline right now"}
-                  </p>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <Button size="sm" variant="outline" onClick={() => box.current?.requestFullscreen?.()}><Maximize /> Fullscreen</Button>
-                <Button size="sm" variant="outline" onClick={() => setChat((c) => !c)}><MessageSquare /> {chat ? "Hide chat" : "Show chat"}</Button>
+              <h1 className="text-3xl">{name}</h1>
+              <div className="flex flex-wrap gap-2">
+                <Button size="sm" variant={fav ? "default" : "outline"} onClick={toggleFav}>
+                  <Heart className={fav ? "fill-current" : ""} /> {fav ? "Saved" : "Save"}
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => box.current?.requestFullscreen?.()}>
+                  <Maximize /> Fullscreen
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => setChat((c) => !c)}>
+                  <MessageSquare /> {chat ? "Hide chat" : "Show chat"}
+                </Button>
                 <Button asChild size="sm" variant="outline">
-                  <a href={`https://twitch.tv/${login}`} target="_blank" rel="noreferrer noopener"><ExternalLink /> Twitch</a>
+                  <a href={`https://twitch.tv/${login}`} target="_blank" rel="noreferrer noopener">
+                    <ExternalLink /> Twitch
+                  </a>
                 </Button>
               </div>
             </div>
-            <p className="mt-4 text-xs text-muted-foreground">Stream by {user?.display_name ?? login}, broadcast on Twitch. All rights belong to the creator.</p>
+            <p className="mt-4 text-xs text-muted-foreground">
+              Stream by {name}, broadcast on Twitch. All rights belong to the creator.
+            </p>
           </div>
           {chat && chatParents.length > 0 && (
             <iframe
               title="Chat"
-              src={`https://www.twitch.tv/embed/${login}/chat?${chatParents.map((parent) => `parent=${encodeURIComponent(parent)}`).join("&")}&darkpopout`}
+              src={`https://www.twitch.tv/embed/${login}/chat?${chatParents
+                .map((parent) => `parent=${encodeURIComponent(parent)}`)
+                .join("&")}&darkpopout`}
               className="h-[70vh] w-full rounded-lg border border-border lg:h-auto lg:min-h-[500px]"
             />
           )}
